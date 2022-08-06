@@ -5,9 +5,9 @@ import sys
 import requests
 import urllib3
 import traceback
+import time
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-import os
 
 # url
 _url = 'https://api.juejin.cn/growth_api/v1'
@@ -29,11 +29,35 @@ def __get_header(cookie_header):
 # 解决出现警告 Adding certificate verification is strongly advised.
 urllib3.disable_warnings()
 
-def juejin_checkIn(cookie):
-    header = __get_header(cookie)
+split_str = '&@@&'
+
+def juejin_checkIn(juejin_cookie):
+    checkin_message = []
+    # 判断是否设置
+    if juejin_cookie is None or len(juejin_cookie) <= 0:
+        print("The juejin_cookie is none")
+        return checkin_message
+
+    juejin_cookie = juejin_cookie.split(split_str)
+    # 遍历cookie执行签到，并返回签到状态码和签到信息
+    for idx, cookie in enumerate(juejin_cookie):
+        time.sleep(10)
+        print(f"[juejin_Account_{idx + 1}]:")
+        header = __get_header(cookie)
+        # 先判断是否签到
+        if get_today_status(header):
+            print("Signed in")
+        else:
+            result = checkIn(header)
+            # 存在账户签到信息，说明成功执行了签到
+            checkin_message.append(f">### juejin_Account_{idx + 1} checkin message\n" + str(result) + "\n - - - \n")
+    return checkin_message
+
+# 单条签到
+def checkIn(header):
     checkin_message = []
     # 1、签到
-    resp = requests.post(url=_url+'/check_in', headers=header)
+    resp = requests.post(url=_url + '/check_in', headers=header)
     result_json = resp.json()
     print('[check in response]', str(result_json))
     resp.close()
@@ -76,6 +100,23 @@ def _get(obj, name):
         return None
     else:
         return obj[name]
+
+# 签到状态
+def get_today_status(header):
+    status = False
+    try:
+        resp = requests.get(url=_url+'/get_today_status', headers=header)
+        result_json = resp.json()
+        print('[get_today_status response]', str(result_json))
+        resp.close()
+        if result_json["err_no"] != 0:
+            print("get_today_status fail : ", result_json["err_msg"])
+        else:
+            status = result_json["data"]
+    except Exception:
+        traceback.print_exc()
+        print('draw fail')
+    return status
 
 # 返回用户头像url
 def get_user_icon(header):

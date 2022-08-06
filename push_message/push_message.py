@@ -1,13 +1,31 @@
 import requests
+import traceback
 
-
+# 推送签到消息至pushplus平台
 def pushplus_message(token, message, topic):
-    payload = {'token': token, "channel": "wechat", "template": "markdown", "content": message, "title": "checkin status"}
-    if topic is not None:
-        payload["topic"] = topic
-    resp = requests.post("http://www.pushplus.plus/send", params=payload)
-    print('pushplus response:', str(resp.json()))
-    resp.close()
+    # token为空
+    if token is None or len(token) <= 0:
+        print('The pushplus_token is none')
+        return
+    # 推送消息为空
+    if message is None or len(message) <= 0:
+        print('The message is none')
+        return
+
+    # 推送消息
+    try:
+        payload = {'token': token, "channel": "wechat", "template": "markdown", "content": message,
+                   "title": "checkin status"}
+        if topic is not None:
+            payload["topic"] = topic
+        resp = requests.post("http://www.pushplus.plus/send", params=payload)
+        print('pushplus response:', str(resp.json()))
+        resp.close()
+    except Exception:
+        traceback.print_exc()
+        print('push message error')
+
+
 
 def server_messgae(token, title, message):
     payload = {"title": title, "desp": message, }
