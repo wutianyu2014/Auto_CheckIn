@@ -27,13 +27,15 @@ if __name__ == '__main__':
 
     checkin_message = juejin_checkIn(juejin_cookie)
 
+    title = None
+
     # 增加彩虹屁
     if len(checkin_message) > 0:
-        text = get_text()
-        if text is not None and len(text) > 0:
-            send_message.append(f">## {text} \n\n")
+        title = get_text()
+        if title is not None and len(title) > 0:
+            send_message.append(f">## {title} \n\n")
         send_message.append(''.join(checkin_message))
 
     message = ''.join(send_message)
 
-    pushplus_message(pushplus_token, message,  'ABC123')
+    pushplus_message(pushplus_token, title, message, 'ABC123')

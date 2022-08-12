@@ -2,7 +2,7 @@ import requests
 import traceback
 
 # 推送签到消息至pushplus平台
-def pushplus_message(token, message, topic):
+def pushplus_message(token, title, message, topic):
     # token为空
     if token is None or len(token) <= 0:
         print('The pushplus_token is none')
@@ -18,6 +18,8 @@ def pushplus_message(token, message, topic):
                    "title": "checkin status"}
         if topic is not None:
             payload["topic"] = topic
+        if title is not None:
+            payload["title"] = title[0:30] + '...'
         resp = requests.post("http://www.pushplus.plus/send", params=payload)
         print('pushplus response:', str(resp.json()))
         resp.close()
