@@ -6,11 +6,11 @@ def pushplus_message(token, title, message, topic):
     # token为空
     if token is None or len(token) <= 0:
         print('The pushplus_token is none')
-        return
+        return None
     # 推送消息为空
     if message is None or len(message) <= 0:
         print('The message is none')
-        return
+        return None
 
     # 推送消息
     try:
@@ -19,13 +19,17 @@ def pushplus_message(token, title, message, topic):
         if topic is not None:
             payload["topic"] = topic
         if title is not None:
-            payload["title"] = str(title[0:30] + '...').replace('\n', ' ')
+            payload["title"] = str(title[0:30]).replace('\n', ' ')
         resp = requests.post("http://www.pushplus.plus/send", params=payload)
         print('pushplus response:', str(resp.json()))
+        resp_json = resp.json()
         resp.close()
+        if resp_json['code'] != 200:
+            return resp_json['msg']
     except Exception:
         traceback.print_exc()
         print('push message error')
+    return None
 
 
 
