@@ -19,7 +19,7 @@ def pushplus_message(token, title, message, topic):
         if topic is not None:
             payload["topic"] = topic
         if title is not None:
-            payload["title"] = title[0:30] + '...'
+            payload["title"] = str(title[0:30] + '...').replace('\n', ' ')
         resp = requests.post("http://www.pushplus.plus/send", params=payload)
         print('pushplus response:', str(resp.json()))
         resp.close()
