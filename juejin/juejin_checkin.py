@@ -57,10 +57,7 @@ def juejin_checkIn(juejin_cookie):
 def checkIn(header):
     checkin_message = []
     # 1、签到
-    resp = requests.post(url=_url + '/check_in', headers=header)
-    result_json = resp.json()
-    print('[check in response]', str(result_json))
-    resp.close()
+    result_json = _check_in(header)
 
     err_no = result_json["err_no"]
     err_msg = result_json["err_msg"]
@@ -93,6 +90,22 @@ def checkIn(header):
     checkin_message.append("**【矿石总量】**  " + str(sum_point) + " <br>")
     checkin_message.append("![](" + str(_get(draw_data, 'lottery_image')) + ") <br>")
     return ''.join(checkin_message)
+
+# 签到
+def _check_in(header):
+    result_json = {}
+    try:
+        # 1、签到
+        resp = requests.post(url=_url + '/check_in', headers=header)
+        result_json = resp.json()
+        print('[_check_in response]', str(result_json))
+        resp.close()
+    except Exception:
+        traceback.print_exc()
+        print('_check_in fail')
+        result_json['err_no'] = -1
+        result_json['err_msg'] = '签到出现异常'
+    return result_json
 
 # 自定义get方法
 def _get(obj, name):
