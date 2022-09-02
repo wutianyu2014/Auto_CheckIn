@@ -104,7 +104,7 @@ def _check_in(header):
         traceback.print_exc()
         print('_check_in fail')
         result_json['err_no'] = -1
-        result_json['err_msg'] = '签到出现异常'
+        result_json['err_msg'] = '签到出现异常(灬ꈍ ꈍ灬)'
     return result_json
 
 # 自定义get方法
