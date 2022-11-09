@@ -22,7 +22,7 @@ jobs:
           pip3 install -r ./requirements.txt
       - name: Run glados checkin
         run: |
-          python3 ./glados/glados_checkin.py
+          python3 ./glados_checkin.py
         env:
           PUSHPLUS_TOKEN: '${{ secrets.PUSHPLUS_TOKEN }}'
           GLADOS_COOKIE: '${{ secrets.GLADOS_COOKIE }}'
