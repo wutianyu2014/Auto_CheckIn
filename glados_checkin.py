@@ -131,7 +131,7 @@ if __name__ == '__main__':
     checkin_message.append("**【签到状态码】**  " + str(code) + " <br>")
     checkin_message.append("**【签到信息】**  " + str(message) + " <br>")
     checkin_message.append("**【email】**  " + str(_get(usr_status, 'email')) + " <br>")
-    checkin_message.append("**【剩余天数】**  " + str(_get(usr_status, 'days')) + " <br>")
+    checkin_message.append("**【剩余天数】**  " + str(_get(usr_status, 'leftDays')) + " <br>")
 
     send_message = ''.join(checkin_message)
 
