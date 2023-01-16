@@ -1,0 +1,22 @@
+rims:
+  login:
+    optid: wutianyu11
+    optpwd: Wty210419
+    encrypted: 'false'
+
+  todo: '1'
+  done: '2'
+
+  # 检查项
+  check:
+    - type: defect
+      name: bug
+    - type: issue
+      name: 缺陷
+    - type: tracer
+      name: 研发任务
+
+toast:
+  interval: 10
+  title: 您有新的rims待办
+  icon_path: .\RootNetLogo.ico
