@@ -59,6 +59,15 @@ def checkIn(header):
     # 1、签到
     result_json = _check_in(header)
 
+    requests.get("https://juejin.cn/", headers=header)
+    time.sleep(10)
+    requests.get("https://juejin.cn/user/center/signin?from=main_page", headers=header)
+    time.sleep(10)
+    requests.get("https://juejin.cn/user/center/lottery?from=lucky_lottery_menu_bar", headers=header)
+    time.sleep(10)
+    requests.get("https://juejin.cn/notification", headers=header)
+    time.sleep(10)
+
     err_no = result_json["err_no"]
     err_msg = result_json["err_msg"]
 
