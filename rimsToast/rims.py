@@ -2,10 +2,9 @@ import traceback
 
 import requests
 import yaml
-import time
 
-from rimsToast.fileMap import *
-from rimsToast.toast import pc_toast
+from util.fileMap import *
+from util.toast import *
 
 _url = 'https://rims.croot.com'
 
