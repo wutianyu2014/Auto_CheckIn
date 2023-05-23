@@ -2,17 +2,18 @@
 
 import io
 import sys
+import time
+import traceback
+
 import requests
 import urllib3
-import traceback
-import time
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 # url
 _url = 'https://api.juejin.cn/growth_api/v1'
 
-def __get_header(cookie_header):
+def _get_header(cookie_header):
     header = {
         'Connection': 'close',
         'Accept': '*/*',
@@ -40,29 +41,43 @@ def juejin_checkIn(juejin_cookie):
 
     juejin_cookie = juejin_cookie.split(split_str)
     # 遍历cookie执行签到，并返回签到状态码和签到信息
-    for idx, cookie in enumerate(juejin_cookie):
+    for idx, cookie in enumerate(juejin_cookie, start=1):
         time.sleep(10)
-        print(f"[juejin_Account_{idx + 1}]:")
-        header = __get_header(cookie)
-        # 先判断是否签到
-        if get_today_status(header):
-            print("Signed in")
-        else:
-            result = checkIn(header)
-            # 存在账户签到信息，说明成功执行了签到
-            checkin_message.append(f">### juejin_Account_{idx + 1} checkin message\n" + str(result) + "\n - - - \n")
+        print(f"[juejin_Account_{idx}]:")
+        header = _get_header(cookie)
+        data = check_in_new(idx, header)
+        if data is not None:
+            checkin_message.append(_get_msg(data))
     return checkin_message
 
 # 单条签到
-def checkIn(header):
-    checkin_message = []
-    # 1、签到
-    result_json = _check_in(header)
+def check_in_new(idx, header):
+    # 1、先判断是否签到
+    resp = requests.get(url=_url + '/get_today_status', headers=header)
+    status_json = resp.json()
+    print('[get_today_status response]', str(status_json))
+    resp.close()
+    # 1.1 获取状态失败
+    if status_json["err_no"] != 0:
+        data = {
+            'idx': str(idx),
+            'code': str(status_json["err_no"]),
+            'message': str(status_json["err_msg"])
+        }
+        return data
 
+    # 1.2 已签到过
+    if status_json["data"]:
+        print("Signed in")
+        return None
+    # 1.3 未签到逻辑
+
+    # 2、开始签到
     requests.get("https://juejin.cn/", headers=header)
     time.sleep(10)
     requests.get("https://juejin.cn/user/center/signin?from=main_page", headers=header)
     time.sleep(10)
+    result_json = _check_in(header)
     requests.get("https://juejin.cn/user/center/lottery?from=lucky_lottery_menu_bar", headers=header)
     time.sleep(10)
     requests.get("https://juejin.cn/notification", headers=header)
@@ -71,34 +86,106 @@ def checkIn(header):
     err_no = result_json["err_no"]
     err_msg = result_json["err_msg"]
 
-    incr_point = 0
-    draw_data = {}
-
     if err_no != 0:
+        # 2.1、签到失败
         print("check in fail : ", err_msg)
-    else:
-        # 签到成功
-        incr_point = result_json["data"]["incr_point"]
-        draw_data = draw(header)
-    # 获取总矿石
+        data = {
+            'idx': str(idx),
+            'code': str(err_no),
+            'message': str(err_msg)
+        }
+        return data
+    # 2.2、签到成功
+    incr_point = result_json["data"]["incr_point"]
+    # 3、抽奖
+    draw_data = draw(header)
+    # 4 获取总矿石
     sum_point = get_cur_point(header)
-    # 获取连签天数
+    # 5 获取连签天数
     cont_count, sum_count = get_counts(header)
-    # 获取用户头像
+    # 6 获取用户头像
     icon = get_user_icon(header)
-    checkin_message.append("![](" + str(icon) + ") <br>")
 
-    checkin_message.append("**【签到状态码】**  " + str(err_no) + " <br>")
-    checkin_message.append("**【签到信息】**  " + str(err_msg) + " <br>")
-    checkin_message.append("**【获取矿石数】**  " + str(incr_point) + " <br>")
-    checkin_message.append("**【连续签到天数】**  " + str(cont_count) + " <br>")
-    checkin_message.append("**【总签到天数】**  " + str(sum_count) + " <br>")
-    checkin_message.append("**【抽奖增加幸运值】**  " + str(_get(draw_data, 'draw_lucky_value')) + " <br>")
-    checkin_message.append("**【总幸运值】**  " + str(_get(draw_data, 'total_lucky_value')) + " <br>")
-    checkin_message.append("**【抽奖结果】**  " + str(_get(draw_data, 'lottery_name')) + " <br>")
-    checkin_message.append("**【矿石总量】**  " + str(sum_point) + " <br>")
-    checkin_message.append("![](" + str(_get(draw_data, 'lottery_image')) + ") <br>")
-    return ''.join(checkin_message)
+    data = {
+        'idx': str(idx),
+        'code': str(err_no),
+        'message': str(err_msg),
+        'icon': str(icon),
+        'incr_point': str(incr_point),
+        'cont_count': str(cont_count),
+        'sum_count': str(sum_count),
+        'draw_lucky_value': str(_get(draw_data, 'draw_lucky_value')),
+        'total_lucky_value': str(_get(draw_data, 'total_lucky_value')),
+        'lottery_name': str(_get(draw_data, 'lottery_name')),
+        'sum_point': str(sum_point),
+        'lottery_image': str(_get(draw_data, 'lottery_image'))
+    }
+    return data
+
+def _get_msg(data):
+    message = []
+    message.append(f">### juejin_Account_{data['idx']} checkin message\n")
+    message.append("![](" + data['icon'] + ") <br>")
+    message.append("**【签到状态码】**  " + data['err_no'] + " <br>")
+    message.append("**【签到信息】**  " + data['err_msg'] + " <br>")
+    if data['err_no'] == 0:
+        message.append("**【获取矿石数】**  " + data['incr_point'] + " <br>")
+        message.append("**【连续签到天数】**  " + data['cont_count'] + " <br>")
+        message.append("**【总签到天数】**  " + data['sum_count'] + " <br>")
+        message.append("**【抽奖增加幸运值】**  " + data['draw_lucky_value'] + " <br>")
+        message.append("**【总幸运值】**  " + data['total_lucky_value'] + " <br>")
+        message.append("**【抽奖结果】**  " + data['lottery_name'] + " <br>")
+        message.append("**【矿石总量】**  " + data['sum_point'] + " <br>")
+        message.append("![](" + data['lottery_image'] + ") <br>")
+    message.append("\n - - - \n")
+    return ''.join(message)
+
+# 单条签到
+# def checkIn(header):
+#     checkin_message = []
+#     # 1、签到
+#     result_json = _check_in(header)
+#
+#     requests.get("https://juejin.cn/", headers=header)
+#     time.sleep(10)
+#     requests.get("https://juejin.cn/user/center/signin?from=main_page", headers=header)
+#     time.sleep(10)
+#     requests.get("https://juejin.cn/user/center/lottery?from=lucky_lottery_menu_bar", headers=header)
+#     time.sleep(10)
+#     requests.get("https://juejin.cn/notification", headers=header)
+#     time.sleep(10)
+#
+#     err_no = result_json["err_no"]
+#     err_msg = result_json["err_msg"]
+#
+#     incr_point = 0
+#     draw_data = {}
+#
+#     if err_no != 0:
+#         print("check in fail : ", err_msg)
+#     else:
+#         # 签到成功
+#         incr_point = result_json["data"]["incr_point"]
+#         draw_data = draw(header)
+#     # 获取总矿石
+#     sum_point = get_cur_point(header)
+#     # 获取连签天数
+#     cont_count, sum_count = get_counts(header)
+#     # 获取用户头像
+#     icon = get_user_icon(header)
+#     checkin_message.append("![](" + str(icon) + ") <br>")
+#
+#     checkin_message.append("**【签到状态码】**  " + str(err_no) + " <br>")
+#     checkin_message.append("**【签到信息】**  " + str(err_msg) + " <br>")
+#     checkin_message.append("**【获取矿石数】**  " + str(incr_point) + " <br>")
+#     checkin_message.append("**【连续签到天数】**  " + str(cont_count) + " <br>")
+#     checkin_message.append("**【总签到天数】**  " + str(sum_count) + " <br>")
+#     checkin_message.append("**【抽奖增加幸运值】**  " + str(_get(draw_data, 'draw_lucky_value')) + " <br>")
+#     checkin_message.append("**【总幸运值】**  " + str(_get(draw_data, 'total_lucky_value')) + " <br>")
+#     checkin_message.append("**【抽奖结果】**  " + str(_get(draw_data, 'lottery_name')) + " <br>")
+#     checkin_message.append("**【矿石总量】**  " + str(sum_point) + " <br>")
+#     checkin_message.append("![](" + str(_get(draw_data, 'lottery_image')) + ") <br>")
+#     return ''.join(checkin_message)
 
 # 签到
 def _check_in(header):
@@ -126,19 +213,21 @@ def _get(obj, name):
 # 签到状态
 def get_today_status(header):
     status = False
+    msg = None
     try:
         resp = requests.get(url=_url+'/get_today_status', headers=header)
         result_json = resp.json()
         print('[get_today_status response]', str(result_json))
         resp.close()
         if result_json["err_no"] != 0:
-            print("get_today_status fail : ", result_json["err_msg"])
+            msg = result_json["err_msg"]
+            print("get_today_status fail : ", msg)
         else:
             status = result_json["data"]
     except Exception:
         traceback.print_exc()
         print('draw fail')
-    return status
+    return status, msg
 
 # 返回用户头像url
 def get_user_icon(header):
