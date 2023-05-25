@@ -125,10 +125,11 @@ def check_in_new(idx, header):
 def _get_msg(data):
     message = []
     message.append(f">### juejin_Account_{data['idx']} checkin message\n")
-    message.append("![](" + data['icon'] + ") <br>")
+    if data['code'] == '0':
+        message.append("![](" + data['icon'] + ") <br>")
     message.append("**【签到状态码】**  " + data['code'] + " <br>")
     message.append("**【签到信息】**  " + data['message'] + " <br>")
-    if data['code'] == 0:
+    if data['code'] == '0':
         message.append("**【获取矿石数】**  " + data['incr_point'] + " <br>")
         message.append("**【连续签到天数】**  " + data['cont_count'] + " <br>")
         message.append("**【总签到天数】**  " + data['sum_count'] + " <br>")
