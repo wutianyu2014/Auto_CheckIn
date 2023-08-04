@@ -76,7 +76,7 @@ def checkIn(header):
 def _check_in(header):
     result_json = {}
     data = {
-        "token": "glados.network"
+        "token": "glados.one"
     }
     try:
         # 1、签到
@@ -140,6 +140,7 @@ if __name__ == '__main__':
     result_list = batch_checkIn(glados_cookie)
     title, send_message = _get_message(result_list)
 
+    # print(send_message)
     # 第一次推送
     msg = pushplus_message(pushplus_token, title, send_message, None)
     if msg is not None:
