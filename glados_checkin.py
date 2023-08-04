@@ -121,8 +121,11 @@ def _get_message(result_list):
     message = []
     # enumerate函数中通过start参数指定从1开始数数，遍历还是从下标0开始
     for idx, data in enumerate(result_list, start=1):
-        title.append(f"{idx}A{data['code']};")
-
+        title.append(f"{idx}")
+        if data['code'] == 1:
+            title.append(f"-{data['code']};")
+        else:
+            title.append("*error!")
         message.append(f">### glados_Account_{idx} checkin message\n")
         message.append("**【签到状态码】**  " + data['code'] + " <br>")
         message.append("**【签到信息】**  " + data['message'] + " <br>")
