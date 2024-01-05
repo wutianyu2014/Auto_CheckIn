@@ -32,12 +32,12 @@ urllib3.disable_warnings()
 
 split_str = '&@@&'
 
-def juejin_checkIn(juejin_cookie):
-    checkin_message = []
+def batch_checkIn(juejin_cookie):
+    result_list = []
     # 判断是否设置
     if juejin_cookie is None or len(juejin_cookie) <= 0:
         print("The juejin_cookie is none")
-        return checkin_message
+        return result_list
 
     juejin_cookie = juejin_cookie.split(split_str)
     # 遍历cookie执行签到，并返回签到状态码和签到信息
@@ -46,9 +46,35 @@ def juejin_checkIn(juejin_cookie):
         print(f"[juejin_Account_{idx}]:")
         header = _get_header(cookie)
         data = check_in_new(idx, header)
+        # 为none代表已签到
         if data is not None:
-            checkin_message.append(_get_msg(data))
-    return checkin_message
+            result_list.append(data)
+    return result_list
+
+# 拼接推送内容，如果全部签到成功，title为空字符串
+def get_send_content(result_list):
+    title = []
+    message = []
+    # enumerate函数中通过start参数指定从1开始数数，遍历还是从下标0开始
+    for idx, data in enumerate(result_list, start=1):
+        message.append(f">### juejin_Account_{data['inx']} checkin message\n")
+        if data['code'] == '0':
+            message.append("![](" + data['icon'] + ") <br>")
+        else:
+            title.append(f"{data['inx']}{data['code']}-")
+        message.append("**【签到状态码】**  " + data['code'] + " <br>")
+        message.append("**【签到信息】**  " + data['message'] + " <br>")
+        if data['code'] == '0':
+            message.append("**【获取矿石数】**  " + data['incr_point'] + " <br>")
+            message.append("**【连续签到天数】**  " + data['cont_count'] + " <br>")
+            message.append("**【总签到天数】**  " + data['sum_count'] + " <br>")
+            message.append("**【抽奖增加幸运值】**  " + data['draw_lucky_value'] + " <br>")
+            message.append("**【总幸运值】**  " + data['total_lucky_value'] + " <br>")
+            message.append("**【抽奖结果】**  " + data['lottery_name'] + " <br>")
+            message.append("**【矿石总量】**  " + data['sum_point'] + " <br>")
+            message.append("![](" + data['lottery_image'] + ") <br>")
+        message.append("\n - - - \n")
+    return ''.join(title), ''.join(message)
 
 # 单条签到
 def check_in_new(idx, header):
@@ -58,11 +84,11 @@ def check_in_new(idx, header):
     print('[get_today_status response]', str(status_json))
     resp.close()
     # 1.1 获取状态失败
-    if status_json["err_no"] != 0:
+    if status_json["err_no"] == 0 or status_json["err_msg"] != 'success':
         data = {
-            'idx': str(idx),
-            'code': str(status_json["err_no"]),
-            'message': str(status_json["err_msg"])
+            'inx': idx,
+            'code': 'N',
+            'message': str(status_json["data"])
         }
         return data
 
@@ -90,8 +116,8 @@ def check_in_new(idx, header):
         # 2.1、签到失败
         print("check in fail : ", err_msg)
         data = {
-            'idx': str(idx),
-            'code': str(err_no),
+            'inx': str(idx),
+            'code': 'N',
             'message': str(err_msg)
         }
         return data
@@ -107,7 +133,7 @@ def check_in_new(idx, header):
     icon = get_user_icon(header)
 
     data = {
-        'idx': str(idx),
+        'inx': str(idx),
         'code': str(err_no),
         'message': str(err_msg),
         'icon': str(icon),
@@ -124,7 +150,7 @@ def check_in_new(idx, header):
 
 def _get_msg(data):
     message = []
-    message.append(f">### juejin_Account_{data['idx']} checkin message\n")
+    message.append(f">### juejin_Account_{data['inx']} checkin message\n")
     if data['code'] == '0':
         message.append("![](" + data['icon'] + ") <br>")
     message.append("**【签到状态码】**  " + data['code'] + " <br>")

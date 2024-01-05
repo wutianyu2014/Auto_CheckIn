@@ -6,30 +6,39 @@ import os
 
 group_id = 'ABC123'
 
-if __name__ == '__main__':
+def checkin():
     # # glados平台cookie
     juejin_cookie = os.environ['JUEJIN_COOKIE']
+
     # pushplus平台token
     pushplus_token = os.environ['PUSHPLUS_TOKEN']
 
+    result_list = batch_checkIn(juejin_cookie)
+    if len(result_list) <= 0:
+        return None
+
     send_message = []
 
-    checkin_message = juejin_checkIn(juejin_cookie)
-
-    title = None
+    title, content = get_send_content(result_list)
 
     # 增加彩虹屁
-    if len(checkin_message) > 0:
-        title = get_rainbow_text()
-        if title is not None and len(title) > 0:
-            send_message.append(f">## {title} \n\n")
-        send_message.append(''.join(checkin_message))
+    rainbow = get_rainbow_text()
 
+    if rainbow is not None and len(rainbow) > 0:
+        send_message.append(f">## {rainbow} \n\n")
+        if len(title) == 0:
+            # 全部签到成功 标题替换成彩虹屁
+            title = rainbow
+
+    send_message.append(content)
     message = ''.join(send_message)
 
     # 第一次推送
-    msg = pushplus_message(pushplus_token, title, message, group_id)
-    if msg is not None:
-        # 推送失败再次推送
-        time.sleep(10)
-        pushplus_message(pushplus_token, '再次推送,首次推送失败:' + msg, message, group_id)
+    msg = pushplus_message(pushplus_token, title, message, None)
+    # if msg is not None:
+    #     # 推送失败再次推送
+    #     time.sleep(10)
+    #     pushplus_message(pushplus_token, '再次推送,首次推送失败:' + msg, message, None)
+
+if __name__ == '__main__':
+    checkin()
