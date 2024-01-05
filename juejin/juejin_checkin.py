@@ -84,7 +84,7 @@ def check_in_new(idx, header):
     print('[get_today_status response]', str(status_json))
     resp.close()
     # 1.1 获取状态失败
-    if status_json["err_no"] == 0 or status_json["err_msg"] != 'success':
+    if status_json["err_no"] != 0 or status_json["err_msg"] != 'success':
         data = {
             'inx': idx,
             'code': 'N',
