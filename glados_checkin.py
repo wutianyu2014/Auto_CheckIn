@@ -89,7 +89,7 @@ def _check_in(header):
         # 1、签到
         resp = requests.post(url='https://glados.rocks/api/user/checkin', headers=header, json=data)
         result_json = resp.json()
-        print('[_check_in response]', str(result_json))
+        print('[_check_in response]', result_json['code'] ,result_json['message'])
         resp.close()
     except Exception:
         traceback.print_exc()
