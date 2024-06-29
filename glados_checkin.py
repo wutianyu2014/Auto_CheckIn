@@ -59,16 +59,23 @@ def batch_checkIn(glados_cookie):
 def checkIn(header):
     # 1、签到
     result_json = _check_in(header)
+    code = _get(result_json, 'code')
 
-    code = result_json["code"]
-    message = result_json["message"]
+    first = _get_first_obj(result_json)
     usr_status = getStatus(header)
+
+    configureId = _get(usr_status, 'configureId')
+    ymal = ''
+    if configureId is not None:
+        ymal = 'https://update.glados-config.com/clash/' + str(configureId) + '/' + str(_get(usr_status, 'code')) + '/' + str(_get(usr_status, 'port')) + '/glados.yaml'
 
     data = {
         'code': str(code),
-        'message': str(message),
+        'message': str(_get(result_json, 'message')),
         'email': str(_get(usr_status, 'email')),
-        'leftDays': str(_get(usr_status, 'leftDays'))
+        'balance': str(_get(first, 'balance')),
+        'leftDays': str(_get(usr_status, 'leftDays')),
+        'yaml': ymal
     }
     return data
 
@@ -82,7 +89,7 @@ def _check_in(header):
         # 1、签到
         resp = requests.post(url='https://glados.rocks/api/user/checkin', headers=header, json=data)
         result_json = resp.json()
-        print('[_check_in response]', result_json['code'] ,result_json['message'])
+        print('[_check_in response]', str(result_json))
         resp.close()
     except Exception:
         traceback.print_exc()
@@ -97,6 +104,14 @@ def _get(obj, name):
         return None
     else:
         return obj[name]
+
+def _get_first_obj(obj):
+    l = _get(obj, 'list')
+    if l is None:
+        return {}
+    if len(l) > 0:
+        return l[0]
+    return {}
 
 # 用户状态
 def getStatus(header):
@@ -131,6 +146,8 @@ def _get_message(result_list):
         message.append("**【签到信息】**  " + data['message'] + " <br>")
         message.append("**【email】**  " + data['email'] + " <br>")
         message.append("**【剩余天数】**  " + data['leftDays'] + " <br>")
+        message.append("**【Points】**  " + data['balance'] + " <br>")
+        message.append("**【yaml】**  " + data['yaml'] + " <br>")
         message.append("\n - - - \n")
     return ''.join(title), ''.join(message)
 

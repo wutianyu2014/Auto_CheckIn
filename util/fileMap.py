@@ -9,7 +9,7 @@ def file_put(f, key, value):
     if not os.path.exists(f):
         with open(f, 'w', encoding='UTF-8') as file:
             file.write("{}")
-            print(f+"文件创建成功")
+            print(f + "文件创建成功")
             return
     map = {}
 
@@ -25,11 +25,12 @@ def file_put(f, key, value):
         # 在我们的文本文件中写入替换的数据
         file.write(str)
 
+
 def file_get(f, key):
     if not os.path.exists(f):
         with open(f, 'w', encoding='UTF-8') as file:
             file.write("{}")
-            print(f+"文件创建成功")
+            print(f + "文件创建成功")
             return None
 
     if key is None or len(key) <= 0:
@@ -41,3 +42,12 @@ def file_get(f, key):
         data = file.read()
         map = json.loads(data)
         return map.get(key, None)
+
+
+def file_load(f):
+    # 使用 open() 函数以只读模式打开我们的文本文件
+    with open(f, 'r', encoding='UTF-8') as file:
+        # 使用 read() 函数读取文件内容并将它们存储在一个新变量中
+        data = file.read()
+        map = json.loads(data)
+        return map
